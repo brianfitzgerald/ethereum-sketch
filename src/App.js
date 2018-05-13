@@ -1,5 +1,5 @@
 import React, { Component } from "react"
-import SimpleStorageContract from "../build/contracts/SimpleStorage.json"
+import Place from "../build/contracts/Place.json"
 import getWeb3 from "./utils/getWeb3"
 
 import "./css/oswald.css"
@@ -13,8 +13,12 @@ class App extends Component {
 
     this.state = {
       storageValue: 0,
-      web3: null
+      web3: null,
+      placeContractInstance: null,
+      accounts: []
     }
+
+    this.setColor = this.setColor.bind(this)
   }
 
   componentWillMount() {
@@ -45,52 +49,70 @@ class App extends Component {
      */
 
     const contract = require("truffle-contract")
-    const simpleStorage = contract(SimpleStorageContract)
-    simpleStorage.setProvider(this.state.web3.currentProvider)
+    const place = contract(Place)
+    place.setProvider(this.state.web3.currentProvider)
 
     // Declaring this for later so we can chain functions on SimpleStorage.
-    var simpleStorageInstance
+    var placeContractInstance
 
     // Get accounts.
     this.state.web3.eth.getAccounts((error, accounts) => {
       console.log(accounts)
 
-      simpleStorage
+      place
         .deployed()
         .then(instance => {
-          simpleStorageInstance = instance
+          placeContractInstance = instance
+
+          console.log(placeContractInstance)
+
+          this.setState({ placeContractInstance, accounts })
 
           // Stores a given value, 5 by default.
-          return simpleStorageInstance.set(4, { from: accounts[0] })
+          return placeContractInstance.getAllColors.call()
         })
         .then(result => {
           // Get the value from the contract to prove it worked.
           console.log(result)
-          return simpleStorageInstance.get.call(accounts[0])
-        })
-        .then(result => {
-          // Update state with the result.
-          console.log(result)
-          return this.setState({ storageValue: result.c[0] })
+
+          this.renderGrid(this.canvasContext, this.state.web3, result)
         })
     })
   }
 
-  renderGrid(context) {
+  renderGrid(context, web3, colorValues) {
     const colors = ["#ffee58", "#26a69a", "#ff7043", "#ec407a"]
+    console.log(context, colorValues)
     for (var i = 0; i < 50; i++) {
       for (var j = 0; j < 50; j++) {
-        context.fillStyle = colors[Math.floor(Math.random() * colors.length)]
+        const colorIndex = colorValues[i][j].toNumber()
+        context.fillStyle = colors[colorIndex]
         context.fillRect(i * 10, j * 10, 50, 50)
       }
     }
   }
 
+  setColor(x, y, colorIndex) {
+    this.state.placeContractInstance
+      .set(x, y, colorIndex, {
+        from: this.state.accounts[0]
+      })
+      .then(response => {
+        console.log(response)
+        return this.state.placeContractInstance.getAllColors.call()
+      })
+      .then(response => {
+        this.renderGrid(this.canvasContext, this.state.web3, response)
+      })
+      .catch(err => {
+        console.log(err)
+      })
+  }
+
   componentDidMount() {
     var canvas = document.getElementById("pixel-grid")
     if (canvas.getContext) {
-      const context = canvas.getContext("2d")
-      this.renderGrid(context)
+      this.canvasContext = canvas.getContext("2d")
     }
   }
 
@@ -109,6 +131,33 @@ class App extends Component {
               <p>The stored value is: {this.state.storageValue}</p>
               <canvas id="pixel-grid" width="500" height="500" />
             </div>
+            <input
+              type="text"
+              value={this.state.xInput}
+              onChange={event => this.setState({ xInput: event.target.value })}
+            />
+            <input
+              type="text"
+              value={this.state.yInput}
+              onChange={event => this.setState({ yInput: event.target.value })}
+            />
+            <input
+              type="text"
+              value={this.state.colorIndex}
+              onChange={event =>
+                this.setState({ colorIndexInput: event.target.value })
+              }
+            />
+            <button
+              onClick={this.setColor.bind(
+                this,
+                this.state.xInput,
+                this.state.yInput,
+                this.state.colorIndexInput
+              )}
+            >
+              Set Color
+            </button>
           </div>
         </main>
       </div>
