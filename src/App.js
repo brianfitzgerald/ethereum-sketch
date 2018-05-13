@@ -60,8 +60,6 @@ class App extends Component {
         .then(instance => {
           simpleStorageInstance = instance
 
-          console.log(simpleStorageInstance)
-
           // Stores a given value, 5 by default.
           return simpleStorageInstance.set(4, { from: accounts[0] })
         })
@@ -78,6 +76,24 @@ class App extends Component {
     })
   }
 
+  renderGrid(context) {
+    const colors = ["#ffee58", "#26a69a", "#ff7043", "#ec407a"]
+    for (var i = 0; i < 50; i++) {
+      for (var j = 0; j < 50; j++) {
+        context.fillStyle = colors[Math.floor(Math.random() * colors.length)]
+        context.fillRect(i * 10, j * 10, 50, 50)
+      }
+    }
+  }
+
+  componentDidMount() {
+    var canvas = document.getElementById("pixel-grid")
+    if (canvas.getContext) {
+      const context = canvas.getContext("2d")
+      this.renderGrid(context)
+    }
+  }
+
   render() {
     return (
       <div className="App">
@@ -90,18 +106,8 @@ class App extends Component {
         <main className="container">
           <div className="pure-g">
             <div className="pure-u-1-1">
-              <h1>Good to Go!</h1>
-              <p>Your Truffle Box is installed and ready.</p>
-              <h2>Smart Contract Example</h2>
-              <p>
-                If your contracts compiled and migrated successfully, below will
-                show a stored value of 5 (by default).
-              </p>
-              <p>
-                Try changing the value stored on <strong>line 59</strong> of
-                App.js.
-              </p>
               <p>The stored value is: {this.state.storageValue}</p>
+              <canvas id="pixel-grid" width="500" height="500" />
             </div>
           </div>
         </main>
