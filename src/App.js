@@ -19,6 +19,8 @@ class App extends Component {
       selectedColorOption: 0,
       gridLoaded: false,
       placeContractInstance: null,
+      xInput: null,
+      yInput: null,
       accounts: []
     }
 
@@ -100,6 +102,7 @@ class App extends Component {
   }
 
   setColor(x, y, colorIndex) {
+    console.log(x, y, colorIndex)
     this.state.placeContractInstance
       .set(x, y, colorIndex, {
         from: this.state.accounts[0]
@@ -125,18 +128,18 @@ class App extends Component {
     var canvas = document.getElementById("pixel-grid")
     if (canvas.getContext) {
       this.canvasContext = canvas.getContext("2d")
+      canvas.addEventListener("click", event => {
+        this.setState({
+          xInput: Math.round(event.clientX / 10),
+          yInput: Math.round(event.clientY / 10)
+        })
+      })
     }
   }
 
   render() {
     return (
       <div className="App">
-        <nav className="navbar pure-menu pure-menu-horizontal">
-          <a href="#" className="pure-menu-heading pure-menu-link">
-            Truffle Box
-          </a>
-        </nav>
-
         <main className="container">
           <div className="pure-g">
             <div className="pure-u-1-1">
