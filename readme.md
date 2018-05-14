@@ -2,4 +2,4 @@
 
 collaborative drawing experiment that uses the ethereum blockchain to store the image.
 
-()[screenshot.png]
+![](https://github.com/brianfitzgerald/ethereum-sketch/blob/master/screenshot.png)
