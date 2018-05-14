@@ -7,6 +7,8 @@ import "./css/open-sans.css"
 import "./css/pure-min.css"
 import "./App.css"
 
+const colors = ["#ffee58", "#26a69a", "#ff7043", "#ec407a"]
+
 class App extends Component {
   constructor(props) {
     super(props)
@@ -14,6 +16,8 @@ class App extends Component {
     this.state = {
       storageValue: 0,
       web3: null,
+      selectedColorOption: 0,
+      gridLoaded: false,
       placeContractInstance: null,
       accounts: []
     }
@@ -75,13 +79,16 @@ class App extends Component {
           // Get the value from the contract to prove it worked.
           console.log(result)
 
+          this.setState({
+            gridLoaded: true
+          })
+
           this.renderGrid(this.canvasContext, this.state.web3, result)
         })
     })
   }
 
   renderGrid(context, web3, colorValues) {
-    const colors = ["#ffee58", "#26a69a", "#ff7043", "#ec407a"]
     console.log(context, colorValues)
     for (var i = 0; i < 50; i++) {
       for (var j = 0; j < 50; j++) {
@@ -109,6 +116,11 @@ class App extends Component {
       })
   }
 
+  setSelectedColorOption(colorIndex) {
+    console.log(colorIndex)
+    this.setState({ selectedColorOption: colorIndex })
+  }
+
   componentDidMount() {
     var canvas = document.getElementById("pixel-grid")
     if (canvas.getContext) {
@@ -128,9 +140,24 @@ class App extends Component {
         <main className="container">
           <div className="pure-g">
             <div className="pure-u-1-1">
-              <p>The stored value is: {this.state.storageValue}</p>
+              {!this.state.gridLoaded ? <p>Loading grid...</p> : null}
               <canvas id="pixel-grid" width="500" height="500" />
             </div>
+            {colors.map((color, i) => (
+              <div
+                className="color-option"
+                style={{
+                  backgroundColor: color,
+                  width: "100px",
+                  height: "100px",
+                  border:
+                    i === this.state.selectedColorOption
+                      ? "1px solid black"
+                      : ""
+                }}
+                onClick={this.setSelectedColorOption.bind(this, i)}
+              />
+            ))}
             <input
               type="text"
               value={this.state.xInput}
@@ -141,19 +168,12 @@ class App extends Component {
               value={this.state.yInput}
               onChange={event => this.setState({ yInput: event.target.value })}
             />
-            <input
-              type="text"
-              value={this.state.colorIndex}
-              onChange={event =>
-                this.setState({ colorIndexInput: event.target.value })
-              }
-            />
             <button
               onClick={this.setColor.bind(
                 this,
                 this.state.xInput,
                 this.state.yInput,
-                this.state.colorIndexInput
+                this.state.selectedColorOption
               )}
             >
               Set Color
