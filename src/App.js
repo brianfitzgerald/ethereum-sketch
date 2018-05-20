@@ -1,5 +1,5 @@
 import React, { Component } from "react"
-import Place from "../build/contracts/Place.json"
+import Zones from "../build/contracts/Zones.json"
 import getWeb3 from "./utils/getWeb3"
 
 import "./css/oswald.css"
@@ -18,7 +18,7 @@ class App extends Component {
       web3: null,
       selectedColorOption: 0,
       gridLoaded: false,
-      placeContractInstance: null,
+      zoneContractInstance: null,
       xInput: null,
       yInput: null,
       accounts: []
@@ -33,7 +33,6 @@ class App extends Component {
 
     getWeb3
       .then(results => {
-        console.log(results)
         this.setState({
           web3: results.web3
         })
@@ -55,38 +54,23 @@ class App extends Component {
      */
 
     const contract = require("truffle-contract")
-    const place = contract(Place)
-    place.setProvider(this.state.web3.currentProvider)
+    const zones = contract(Zones)
+    zones.setProvider(this.state.web3.currentProvider)
 
     // Declaring this for later so we can chain functions on SimpleStorage.
-    var placeContractInstance
+    var zoneContractInstance
 
     // Get accounts.
     this.state.web3.eth.getAccounts((error, accounts) => {
       console.log(accounts)
 
-      place
-        .deployed()
-        .then(instance => {
-          placeContractInstance = instance
+      zones.deployed().then(instance => {
+        zoneContractInstance = instance
 
-          console.log(placeContractInstance)
+        console.log(zoneContractInstance)
 
-          this.setState({ placeContractInstance, accounts })
-
-          // Stores a given value, 5 by default.
-          return placeContractInstance.getAllColors.call()
-        })
-        .then(result => {
-          // Get the value from the contract to prove it worked.
-          console.log(result)
-
-          this.setState({
-            gridLoaded: true
-          })
-
-          this.renderGrid(this.canvasContext, this.state.web3, result)
-        })
+        this.setState({ zoneContractInstance, accounts })
+      })
     })
   }
 
@@ -103,13 +87,13 @@ class App extends Component {
 
   setColor(x, y, colorIndex) {
     console.log(x, y, colorIndex)
-    this.state.placeContractInstance
+    this.state.zoneContractInstance
       .set(x, y, colorIndex, {
         from: this.state.accounts[0]
       })
       .then(response => {
         console.log(response)
-        return this.state.placeContractInstance.getAllColors.call()
+        return this.state.zoneContractInstance.getAllColors.call()
       })
       .then(response => {
         this.renderGrid(this.canvasContext, this.state.web3, response)
@@ -137,6 +121,35 @@ class App extends Component {
     }
   }
 
+  addZone() {
+    const connections = [12, 14, 5]
+    const currentOwner = 0x0d1d4e623d10f9fba5db95830f7d3839406c6af2
+    const id = prompt("enter a new id")
+    // console.log(this.state.web3.getBalance(this.state.accounts[0]))
+    this.state.zoneContractInstance
+      .addZone(connections, currentOwner, id, {
+        from: this.state.accounts[0],
+        gas: 2721975
+      })
+      .then(response => {
+        console.log(response)
+      })
+      .catch(err => {
+        console.log(err)
+      })
+  }
+
+  getBoardState() {
+    this.state.zoneContractInstance.getZones
+      .call()
+      .then(response => {
+        console.log(response)
+      })
+      .catch(err => {
+        console.log(err)
+      })
+  }
+
   render() {
     return (
       <div className="App">
@@ -146,40 +159,9 @@ class App extends Component {
               {!this.state.gridLoaded ? <p>Loading grid...</p> : null}
               <canvas id="pixel-grid" width="500" height="500" />
             </div>
-            {colors.map((color, i) => (
-              <div
-                className="color-option"
-                style={{
-                  backgroundColor: color,
-                  width: "100px",
-                  height: "100px",
-                  border:
-                    i === this.state.selectedColorOption
-                      ? "1px solid black"
-                      : ""
-                }}
-                onClick={this.setSelectedColorOption.bind(this, i)}
-              />
-            ))}
-            <input
-              type="text"
-              value={this.state.xInput}
-              onChange={event => this.setState({ xInput: event.target.value })}
-            />
-            <input
-              type="text"
-              value={this.state.yInput}
-              onChange={event => this.setState({ yInput: event.target.value })}
-            />
-            <button
-              onClick={this.setColor.bind(
-                this,
-                this.state.xInput,
-                this.state.yInput,
-                this.state.selectedColorOption
-              )}
-            >
-              Set Color
+            <button onClick={this.addZone.bind(this)}>Add Zone</button>
+            <button onClick={this.getBoardState.bind(this)}>
+              Get Board State
             </button>
           </div>
         </main>
