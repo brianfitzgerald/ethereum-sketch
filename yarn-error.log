@@ -1,5 +1,5 @@
 Arguments: 
-  /Users/brianfitzgerald/.nvm/versions/node/v8.1.2/bin/node /Users/brianfitzgerald/.yarn/bin/yarn.js app
+  /Users/brianfitzgerald/.nvm/versions/node/v8.1.2/bin/node /Users/brianfitzgerald/.yarn/bin/yarn.js dev
 
 PATH: 
   /Users/brianfitzgerald/.nvm/versions/node/v8.1.2/bin:/Users/brianfitzgerald/.yarn/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/share/dotnet:/Library/Frameworks/Mono.framework/Versions/Current/Commands:/Library/TeX/texbin
@@ -123,7 +123,7 @@ Lockfile:
   No lockfile
 
 Trace: 
-  Error: Command "app" not found.
+  Error: Command "dev" not found.
       at new MessageError (/Users/brianfitzgerald/.yarn/lib/cli.js:186:110)
       at /Users/brianfitzgerald/.yarn/lib/cli.js:87307:17
       at Generator.next (<anonymous>)
