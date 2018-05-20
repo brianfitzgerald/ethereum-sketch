@@ -21,7 +21,8 @@ class App extends Component {
       zoneContractInstance: null,
       xInput: null,
       yInput: null,
-      accounts: []
+      accounts: [],
+      zones: []
     }
 
     this.setColor = this.setColor.bind(this)
@@ -43,6 +44,33 @@ class App extends Component {
       .catch(() => {
         console.log("Error finding web3.")
       })
+
+    this.dummyInit()
+  }
+
+  dummyInit() {
+    this.setState({
+      gridLoaded: true,
+      connections: [[5, 4], [3, 5], [3, 4], [5, 2]],
+      zones: [
+        {
+          id: 5,
+          currentOwner: "0x627306090abab3a6e1400e9345bc60c78a8bef57"
+        },
+        {
+          id: 4,
+          currentOwner: "0x627306090abab3a6e1400e9345bc60c78a8bef57"
+        },
+        {
+          id: 3,
+          currentOwner: "0x627306090abab3a6e1400e9345bc60c78a8bef57"
+        },
+        {
+          id: 2,
+          currentOwner: "0x627306090abab3a6e1400e9345bc60c78a8bef57"
+        }
+      ]
+    })
   }
 
   instantiateContract() {
@@ -64,24 +92,32 @@ class App extends Component {
     this.state.web3.eth.getAccounts((error, accounts) => {
       console.log(accounts)
 
-      zones.deployed().then(instance => {
-        zoneContractInstance = instance
+      zones
+        .deployed()
+        .then(instance => {
+          zoneContractInstance = instance
 
-        console.log(zoneContractInstance)
+          console.log(zoneContractInstance)
 
-        this.setState({ zoneContractInstance, accounts })
-      })
+          this.setState({ zoneContractInstance, accounts })
+
+          return zoneContractInstance.getZones.call()
+        })
+        .then(result => {
+          console.log(result)
+
+          this.setState({ gridLoaded: true, zones: result })
+
+          this.renderZones(this.canvasContext, this.state.web3, result)
+        })
     })
   }
 
-  renderGrid(context, web3, colorValues) {
-    console.log(context, colorValues)
-    for (var i = 0; i < 50; i++) {
-      for (var j = 0; j < 50; j++) {
-        const colorIndex = colorValues[i][j].toNumber()
-        context.fillStyle = colors[colorIndex]
-        context.fillRect(i * 10, j * 10, 50, 50)
-      }
+  renderZones(context, web3, zones) {
+    console.log(context, zones)
+    for (var i = 0; i < zones.length; i++) {
+      context.fillStyle = colors[i]
+      context.fillRect(i * 10, 5, 10, 10)
     }
   }
 
@@ -96,7 +132,7 @@ class App extends Component {
         return this.state.zoneContractInstance.getAllColors.call()
       })
       .then(response => {
-        this.renderGrid(this.canvasContext, this.state.web3, response)
+        this.renderZones(this.canvasContext, this.state.web3, response)
       })
       .catch(err => {
         console.log(err)

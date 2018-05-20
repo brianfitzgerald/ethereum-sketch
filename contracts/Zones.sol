@@ -4,13 +4,13 @@ contract Zones {
 
     struct Zone {
         uint id;
-        uint16[3] connections;
         address currentOwner;
     }
 
-    Zone[] boardStatus;
+    Zone[] zones;
+    uint[][] connections;
 
-    string[] players;
+    mapping(address => string) players;
 
     function claimBoard(address newOwner, uint zoneID) public {
         boardStatus[zoneID].currentOwner = newOwner;
