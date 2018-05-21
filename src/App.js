@@ -4,10 +4,10 @@ import getWeb3 from "./utils/getWeb3"
 
 import "./css/oswald.css"
 import "./css/open-sans.css"
-import "./css/pure-min.css"
 import "./App.css"
 
-const colors = ["#ec407a", "#26a69a", "#ff7043", "#ffee58"]
+const colors = ["#ec407a", "#26a69a", "#ff7043", "#ff7043"]
+const RENDER_SCALE = 5
 
 class App extends Component {
   constructor(props) {
@@ -23,7 +23,8 @@ class App extends Component {
       yInput: null,
       accounts: [],
       zones: [],
-      connections: []
+      connections: [],
+      selectedZone: null
     }
 
     this.setColor = this.setColor.bind(this)
@@ -45,6 +46,41 @@ class App extends Component {
       .catch(() => {
         console.log("Error finding web3.")
       })
+  }
+
+  componentDidMount() {
+    var canvas = document.getElementById("pixel-grid")
+    const zones = this.state.zones
+    this.dummyInit()
+    if (canvas.getContext) {
+      canvas.addEventListener("click", event => {
+        this.setState({
+          xInput: event.clientX,
+          yInput: event.clientY
+        })
+        console.log(this.state.zones)
+        console.log(this.state.xInput, this.state.yInput)
+        for (var i = 0; i < this.state.zones.length; i++) {
+          console.log(
+            this.state.zones[i].x * RENDER_SCALE,
+            this.state.zones[i].y * RENDER_SCALE
+          )
+          if (
+            this.state.xInput > this.state.zones[i].x * RENDER_SCALE - 50 &&
+            this.state.xInput < this.state.zones[i].x * RENDER_SCALE + 50 &&
+            this.state.yInput > this.state.zones[i].y * RENDER_SCALE - 50 &&
+            this.state.yInput < this.state.zones[i].y * RENDER_SCALE + 50
+          ) {
+            console.log("click")
+            console.log(this.state.zones[i])
+            this.setState({
+              selectedZone: this.state.zones[i]
+            })
+            return
+          }
+        }
+      })
+    }
   }
 
   dummyInit() {
@@ -120,18 +156,17 @@ class App extends Component {
     })
   }
 
-  renderZones(canvas, web3, zones, connections) {
-    const RENDER_SCALE = 5
-    console.log(canvas, web3, zones)
+  renderZones(canvas, web3, zones, connections, state) {
     var context = canvas.getContext("2d")
     context.clearRect(0, 0, canvas.width, canvas.height)
+    console.log(state.xInput, state.yInput)
     for (var i = 0; i < zones.length; i++) {
       context.fillStyle = colors[i]
       context.fillRect(
         zones[i].x * RENDER_SCALE,
         zones[i].y * RENDER_SCALE,
-        35,
-        35
+        50,
+        50
       )
     }
     for (let i = 0; i < connections.length; i++) {
@@ -139,12 +174,12 @@ class App extends Component {
       const endPoint = zones.find(z => z.id === connections[i][1])
       context.beginPath()
       context.moveTo(
-        startPoint.x * RENDER_SCALE + 17,
-        startPoint.y * RENDER_SCALE + 17
+        startPoint.x * RENDER_SCALE + 25,
+        startPoint.y * RENDER_SCALE + 25
       )
       context.lineTo(
-        endPoint.x * RENDER_SCALE + 17,
-        endPoint.y * RENDER_SCALE + 17
+        endPoint.x * RENDER_SCALE + 25,
+        endPoint.y * RENDER_SCALE + 25
       )
       context.stroke()
     }
@@ -171,19 +206,6 @@ class App extends Component {
   setSelectedColorOption(colorIndex) {
     console.log(colorIndex)
     this.setState({ selectedColorOption: colorIndex })
-  }
-
-  componentDidMount() {
-    var canvas = document.getElementById("pixel-grid")
-    this.dummyInit()
-    if (canvas.getContext) {
-      canvas.addEventListener("click", event => {
-        this.setState({
-          xInput: Math.round(event.clientX / 10),
-          yInput: Math.round(event.clientY / 10)
-        })
-      })
-    }
   }
 
   addZone() {
@@ -215,14 +237,26 @@ class App extends Component {
       })
   }
 
+  purchaseZone() {}
+
   render() {
     if (this.state.gridLoaded) {
-      console.log("render grid")
       this.renderZones(
         document.getElementById("pixel-grid"),
         this.state.web3,
         this.state.zones,
-        this.state.connections
+        this.state.connections,
+        this.state
+      )
+    }
+    let selectedZone = null
+    console.log(this.state.selectedZone)
+    if (this.state.selectedZone) {
+      selectedZone = (
+        <div>
+          <span>Selected Zone: {this.state.selectedZone.id}</span>
+          <button onClick={this.purchaseZone.bind(this)}>Purchase</button>
+        </div>
       )
     }
     return (
@@ -233,10 +267,14 @@ class App extends Component {
               {!this.state.gridLoaded ? <p>Loading grid...</p> : null}
               <canvas id="pixel-grid" width="500" height="500" />
             </div>
-            <button onClick={this.addZone.bind(this)}>Add Zone</button>
-            <button onClick={this.getBoardState.bind(this)}>
-              Get Board State
-            </button>
+            {selectedZone}
+            <br />
+            <span>
+              <button onClick={this.addZone.bind(this)}>Add Zone</button>
+              <button onClick={this.getBoardState.bind(this)}>
+                Get Board State
+              </button>
+            </span>
           </div>
         </main>
       </div>
