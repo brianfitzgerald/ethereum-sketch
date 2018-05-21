@@ -7,7 +7,7 @@ import "./css/open-sans.css"
 import "./css/pure-min.css"
 import "./App.css"
 
-const colors = ["#ffee58", "#26a69a", "#ff7043", "#ec407a"]
+const colors = ["#ec407a", "#26a69a", "#ff7043", "#ffee58"]
 
 class App extends Component {
   constructor(props) {
@@ -22,7 +22,8 @@ class App extends Component {
       xInput: null,
       yInput: null,
       accounts: [],
-      zones: []
+      zones: [],
+      connections: []
     }
 
     this.setColor = this.setColor.bind(this)
@@ -44,30 +45,36 @@ class App extends Component {
       .catch(() => {
         console.log("Error finding web3.")
       })
-
-    this.dummyInit()
   }
 
   dummyInit() {
     this.setState({
       gridLoaded: true,
-      connections: [[5, 4], [3, 5], [3, 4], [5, 2]],
+      connections: [[5, 4], [3, 5], [3, 4], [3, 2]],
       zones: [
         {
           id: 5,
-          currentOwner: "0x627306090abab3a6e1400e9345bc60c78a8bef57"
+          currentOwner: "0x627306090abab3a6e1400e9345bc60c78a8bef57",
+          x: 10,
+          y: 15
         },
         {
           id: 4,
-          currentOwner: "0x627306090abab3a6e1400e9345bc60c78a8bef57"
+          currentOwner: "0x627306090abab3a6e1400e9345bc60c78a8bef57",
+          x: 25,
+          y: 15
         },
         {
           id: 3,
-          currentOwner: "0x627306090abab3a6e1400e9345bc60c78a8bef57"
+          currentOwner: "0x627306090abab3a6e1400e9345bc60c78a8bef57",
+          x: 10,
+          y: 35
         },
         {
           id: 2,
-          currentOwner: "0x627306090abab3a6e1400e9345bc60c78a8bef57"
+          currentOwner: "0x627306090abab3a6e1400e9345bc60c78a8bef57",
+          x: 40,
+          y: 35
         }
       ]
     })
@@ -108,16 +115,38 @@ class App extends Component {
 
           this.setState({ gridLoaded: true, zones: result })
 
-          this.renderZones(this.canvasContext, this.state.web3, result)
+          // this.renderZones(this.canvasContext, this.state.web3, result)
         })
     })
   }
 
-  renderZones(context, web3, zones) {
-    console.log(context, zones)
+  renderZones(canvas, web3, zones, connections) {
+    const RENDER_SCALE = 5
+    console.log(canvas, web3, zones)
+    var context = canvas.getContext("2d")
+    context.clearRect(0, 0, canvas.width, canvas.height)
     for (var i = 0; i < zones.length; i++) {
       context.fillStyle = colors[i]
-      context.fillRect(i * 10, 5, 10, 10)
+      context.fillRect(
+        zones[i].x * RENDER_SCALE,
+        zones[i].y * RENDER_SCALE,
+        35,
+        35
+      )
+    }
+    for (let i = 0; i < connections.length; i++) {
+      const startPoint = zones.find(z => z.id === connections[i][0])
+      const endPoint = zones.find(z => z.id === connections[i][1])
+      context.beginPath()
+      context.moveTo(
+        startPoint.x * RENDER_SCALE + 17,
+        startPoint.y * RENDER_SCALE + 17
+      )
+      context.lineTo(
+        endPoint.x * RENDER_SCALE + 17,
+        endPoint.y * RENDER_SCALE + 17
+      )
+      context.stroke()
     }
   }
 
@@ -132,7 +161,7 @@ class App extends Component {
         return this.state.zoneContractInstance.getAllColors.call()
       })
       .then(response => {
-        this.renderZones(this.canvasContext, this.state.web3, response)
+        // this.renderZones(this.canvasContext, this.state.web3, response)
       })
       .catch(err => {
         console.log(err)
@@ -146,8 +175,8 @@ class App extends Component {
 
   componentDidMount() {
     var canvas = document.getElementById("pixel-grid")
+    this.dummyInit()
     if (canvas.getContext) {
-      this.canvasContext = canvas.getContext("2d")
       canvas.addEventListener("click", event => {
         this.setState({
           xInput: Math.round(event.clientX / 10),
@@ -187,6 +216,15 @@ class App extends Component {
   }
 
   render() {
+    if (this.state.gridLoaded) {
+      console.log("render grid")
+      this.renderZones(
+        document.getElementById("pixel-grid"),
+        this.state.web3,
+        this.state.zones,
+        this.state.connections
+      )
+    }
     return (
       <div className="App">
         <main className="container">
